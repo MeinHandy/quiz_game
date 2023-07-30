@@ -1,6 +1,89 @@
+# Super, Fucking, Simple.
+from Crypto.Cipher import AES
+from Crypto import Random
 import threading
-import reyvotLib as rv
-from reyvotLib import *
+import hashlib
+import random
+import socket
+import base64
+import time
+import rsa
+import os
+
+
+# Stuff you do not read
+# https://stackoverflow.com/questions/12524994/encrypt-and-decrypt-using-pycrypto-aes-256#comment80992309_21928790
+class AESCipher(object):
+    def __init__(self, key):
+        self.bs = AES.block_size
+        self.key = hashlib.sha256(key.encode()).digest()
+
+    def encrypt(self, raw):
+        raw = self._pad(raw)
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return base64.b64encode(iv + cipher.encrypt(raw.encode()))
+
+    def decrypt(self, enc):
+        enc = base64.b64decode(enc)
+        iv = enc[:AES.block_size]
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return self._unpad(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
+
+    def _pad(self, s):
+        return s + (self.bs - len(s.encode()) % self.bs) * chr(self.bs - len(s.encode()) % self.bs)
+
+    @staticmethod
+    def _unpad(s):
+        return s[:-ord(s[len(s) - 1:])]
+
+
+class Server:
+    def __init__(self):
+        self.server_private_key = None
+        self.server_public_key = None
+        self.names = []
+        self.keys = []
+
+    # Set up encryption
+    def encryption_setup(self):  # Load public and private key
+        if os.path.exists("server_public_key") and os.path.exists("server_private_key"):
+            self.server_public_key = rsa.PublicKey.load_pkcs1(open("server_public_key", "rb").read())
+            self.server_private_key = rsa.PrivateKey.load_pkcs1(open("server_private_key", "rb").read())
+        else:
+            self.server_public_key, self.server_private_key = rsa.newkeys(2048)
+            open("server_public_key", "wb").write(self.server_public_key.save_pkcs1('PEM'))
+            open("server_private_key", "wb").write(self.server_private_key.save_pkcs1('PEM'))
+
+    def decrypt_msg(self, msg=None):
+        try:
+            msg = rsa.decrypt(msg, self.server_private_key)
+            return msg
+        except Exception as e:
+            print("Failure occurred: {}".format(e))
+
+
+# Stuff you read
+class Game:
+    def __init__(self):
+        self.quiz_list = {"Quiz A": ["10+10", "10+15"], "Quiz B": ["5*10", "10*10"]}
+
+    def process_request(self, msg, username):
+        msg = msg.lower()
+        command_chain = []
+        command = ""
+        for letter in msg + ',':
+            if letter == ',':
+                command_chain.append(command)
+                command = ""
+            else:
+                command += letter
+
+        response = ""
+        for item in range(len(command_chain)):  # Start processing command_chain here
+            if command_chain[item] == "quiz_list":
+                response += str(self.quiz_list.keys()) + ','
+        return response  # What client sees
 
 
 class ServerThread(threading.Thread):
@@ -36,7 +119,7 @@ class ServerThread(threading.Thread):
                 print('received "%s"' % self.msg)
                 print("Processing request")
                 # Do shit here
-                # self.response = game.process_request(self.msg, self.password)
+                self.response = game.process_request(self.msg, self.password)
 
                 # Response
                 print('sending data back to the client')
@@ -49,8 +132,9 @@ class ServerThread(threading.Thread):
 
 
 if __name__ == '__main__':
-    server = rv.Server()
-    rv.Server.encryption_setup(server, private_key_name="server_private_key", public_key_name="server_public_key")
+    server = Server()
+    server.encryption_setup()
+    game = Game()
 
     tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -64,3 +148,6 @@ if __name__ == '__main__':
         newthread = ServerThread(ip, port)
         newthread.start()
         threads.append(newthread)
+
+    for t in threads:
+        t.join()

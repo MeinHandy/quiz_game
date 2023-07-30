@@ -1,5 +1,40 @@
-import reyvotLib as rv
-from reyvotLib import *
+# Super, Fucking, Simple.
+from Crypto.Cipher import AES
+from Crypto import Random
+import hashlib
+import socket
+import base64
+import time
+import rsa
+import os
+from tkinter import *
+from tkinter import ttk
+
+
+# https://stackoverflow.com/questions/12524994/encrypt-and-decrypt-using-pycrypto-aes-256#comment80992309_21928790
+class AESCipher(object):
+    def __init__(self, key):
+        self.bs = AES.block_size
+        self.key = hashlib.sha256(key.encode()).digest()
+
+    def encrypt(self, raw):
+        raw = self._pad(raw)
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return base64.b64encode(iv + cipher.encrypt(raw.encode()))
+
+    def decrypt(self, enc):
+        enc = base64.b64decode(enc)
+        iv = enc[:AES.block_size]
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return self._unpad(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
+
+    def _pad(self, s):
+        return s + (self.bs - len(s.encode()) % self.bs) * chr(self.bs - len(s.encode()) % self.bs)
+
+    @staticmethod
+    def _unpad(s):
+        return s[:-ord(s[len(s) - 1:])]
 
 
 class Client:
@@ -49,18 +84,65 @@ class Client:
 
 class Game:
     def __init__(self):
-        self.server_ip = None
+        self.menu_frame = None
+        self.quiz_list = None
+        self.server_list = None
+        self.server_ips = None
+        self.client = None
         self.server_port = None
+        self.server_ip = None
+        self.buttons = {}
+        self.root = Tk()
+        self.main_menu()
 
-    def join_game(self):
-        self.server_ip = "localhost"
-        self.server_port = 34197
+    def process_response(self, response):
+        command_chain = []
+        command = ""
+        for letter in response + ',':
+            if letter == ',':
+                command_chain.append(command)
+                command = ""
+            else:
+                command += letter
+        return command_chain
+
+    def send_request(self, message):
+        request = str(message)  # May contain 8192 bytes
+        print('sending "%s"' % request)
+        client.encrypt_and_send_msg(request)  # Message
+        response = client.receive_and_decrypt_msg_response()  # Response
+        print('received "%s"' % response)
+        command_chain = self.process_response(response)
+        return command_chain
+
+    def main_menu(self):
+        self.server_ips = {"localhost": 34197, "127.0.0.1": 34197}
+        self.menu_frame = ttk.LabelFrame(self.root, text="game")
+        self.menu_frame.grid()
+        join_button = ttk.Button(self.menu_frame, text="join", command=self.join_server)
+        join_button.grid()
+        selected_server = StringVar()
+        selected_server.set(list(self.server_ips.keys())[0])
+        self.server_list = ttk.Combobox(self.menu_frame, textvariable=selected_server, state="readonly")
+        self.server_list['values'] = list(self.server_ips)
+        self.server_list.grid()
+        self.root.mainloop()
+
+    def join_server(self):
+        self.server_ip = self.server_list.get()
+        self.server_port = self.server_ips.get(self.server_list.get())
         client.encryption_setup()
         client.connect_server(host=(self.server_ip, self.server_port), password="joe")
         client.encryptor = AESCipher(str(client.password))
+        self.quiz_list = self.send_request("quiz_list")[1]
+        print(self.process_response(self.quiz_list))
+        # self.menu_frame.destroy()
+
+        def receiver():
+            self.root.after(1000, receiver)
+        receiver()
 
 
 if __name__ == '__main__':
     client = Client()
     game = Game()
-    game.join_game()
