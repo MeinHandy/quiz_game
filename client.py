@@ -9,6 +9,7 @@ import rsa
 import os
 from tkinter import *
 from tkinter import ttk
+import ast
 
 
 # https://stackoverflow.com/questions/12524994/encrypt-and-decrypt-using-pycrypto-aes-256#comment80992309_21928790
@@ -82,7 +83,7 @@ class Client:
         return self.encryptor.decrypt(self.socket.recv(16384))
 
 
-class Game:
+class Game:  # everything in this was written by andre
     def __init__(self):
         self.menu_frame = None
         self.quiz_list = None
@@ -115,6 +116,14 @@ class Game:
         command_chain = self.process_response(response)
         return command_chain
 
+    def raw_request(self, message):  # to bypass process_response
+        request = str(message)  # May contain 8192 bytes
+        print('sending "%s"' % request)
+        client.encrypt_and_send_msg(request)  # Message
+        response = client.receive_and_decrypt_msg_response()  # Response
+        print('received "%s"' % response)
+        return response
+
     def main_menu(self):
         self.server_ips = {"localhost": 34197, "127.0.0.1": 34197}
         self.menu_frame = ttk.LabelFrame(self.root, text="game")
@@ -134,9 +143,12 @@ class Game:
         client.encryption_setup()
         client.connect_server(host=(self.server_ip, self.server_port), password="joe")
         client.encryptor = AESCipher(str(client.password))
-        self.quiz_list = self.send_request("quiz_list")[1]
-        print(self.process_response(self.quiz_list))
-        # self.menu_frame.destroy()
+        self.quiz_list = self.raw_request("quiz_list")
+        self.quiz_list = self.quiz_list[:-1]
+        self.quiz_list = ast.literal_eval(self.quiz_list)
+        print(self.quiz_list['Quiz A'])
+
+        # self.menu_frame.destroy()  # destroys the menu so the new ui can be displayed
 
         def receiver():
             self.root.after(1000, receiver)

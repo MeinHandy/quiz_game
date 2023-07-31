@@ -64,7 +64,7 @@ class Server:
 
 
 # Stuff you read
-class Game:
+class Game:  # everything thing in this was written by andre
     def __init__(self):
         self.quiz_list = {"Quiz A": ["10+10", "10+15"], "Quiz B": ["5*10", "10*10"]}
 
@@ -82,7 +82,7 @@ class Game:
         response = ""
         for item in range(len(command_chain)):  # Start processing command_chain here
             if command_chain[item] == "quiz_list":
-                response += str(self.quiz_list.keys()) + ','
+                response += str(self.quiz_list) + ','
         return response  # What client sees
 
 
