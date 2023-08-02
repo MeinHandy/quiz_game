@@ -85,6 +85,10 @@ class Client:
 
 class Game:  # everything in this was written by andre
     def __init__(self):
+        self.quiz_start_button = None
+        self.quiz_list_box = None
+        self.selected_quiz = None
+        self.quiz_menu_frame = None
         self.menu_frame = None
         self.quiz_list = None
         self.server_list = None
@@ -144,11 +148,24 @@ class Game:  # everything in this was written by andre
         client.connect_server(host=(self.server_ip, self.server_port), password="joe")
         client.encryptor = AESCipher(str(client.password))
         self.quiz_list = self.raw_request("quiz_list")
-        self.quiz_list = self.quiz_list[:-1]
+        self.quiz_list = self.quiz_list[:-1]  # removes annoying comma
         self.quiz_list = ast.literal_eval(self.quiz_list)
-        print(self.quiz_list['Quiz A'])
+        self.menu_frame.destroy()  # destroys the menu so the new ui can be displayed
+        self.quiz_menu()
 
-        # self.menu_frame.destroy()  # destroys the menu so the new ui can be displayed
+    def quiz_menu(self):
+        self.quiz_menu_frame = ttk.LabelFrame(self.root)
+        self.quiz_menu_frame.grid()
+        self.selected_quiz = StringVar()
+        self.selected_quiz.set(list(self.quiz_list.keys())[0])
+        self.quiz_list_box = ttk.Combobox(self.quiz_menu_frame, textvariable=self.selected_quiz, state="readonly")
+        self.quiz_list_box['values'] = list(self.quiz_list)
+        self.quiz_list_box.grid()
+        self.quiz_start_button = ttk.Button(self.quiz_menu_frame, text="Start Quiz", command=lambda quiz=self.quiz_list_box.get(): self.quiz_start(quiz))
+        self.quiz_start_button.grid()
+
+    def quiz_start(self, quiz):
+        print(quiz)
 
         def receiver():
             self.root.after(1000, receiver)
