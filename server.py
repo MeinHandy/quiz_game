@@ -66,7 +66,7 @@ class Server:
 # Stuff you read
 class Game:  # everything thing in this was written by andre
     def __init__(self):
-        self.quiz_list = {"Quiz A": ["10+10", "10+15"], "Quiz B": ["5*10", "10*10"]}
+        self.quiz_list = {"Quiz A": ["10+10", "10+15"], "Quiz B": ["5*10", "10*10"], "Quiz C": ["20-10", "30-15"]}
 
     def process_request(self, msg, username):
         msg = msg.lower()
