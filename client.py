@@ -4,12 +4,12 @@ from Crypto import Random
 import hashlib
 import socket
 import base64
-import time
 import rsa
 import os
 from tkinter import *
 from tkinter import ttk
 import ast
+import random
 
 
 # https://stackoverflow.com/questions/12524994/encrypt-and-decrypt-using-pycrypto-aes-256#comment80992309_21928790
@@ -161,13 +161,21 @@ class Game:  # everything in this was written by andre
         self.quiz_list_box = ttk.Combobox(self.quiz_menu_frame, textvariable=self.selected_quiz, state="readonly")
         self.quiz_list_box['values'] = list(self.quiz_list)
         self.quiz_list_box.grid()
-        self.quiz_start_button = ttk.Button(self.quiz_menu_frame, text="Start Quiz", command=lambda quiz=self.quiz_list_box.get(): self.quiz_start(quiz))
+        self.quiz_start_button = ttk.Button(self.quiz_menu_frame, text="Start Quiz", command=self.quiz_start)
         self.quiz_start_button.grid()
 
-    def quiz_start(self, quiz):
-        print(quiz)
+    def quiz_start(self):
+        quiz_name = self.quiz_list_box.get()
+        self.quiz_menu_frame.destroy()
+        quiz_questions = self.quiz_list[quiz_name]  # stores the quiz questions
+        print(quiz_questions)
 
-        def receiver():
+        quiz_frame = ttk.LabelFrame(self.root, text=quiz_name)
+        quiz_frame.grid()
+        quiz_question = Label(quiz_frame, textvariable=question)
+        quiz_question.grid()
+
+        def receiver():  # allows for looping with tkinter
             self.root.after(1000, receiver)
         receiver()
 
