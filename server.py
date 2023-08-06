@@ -3,7 +3,6 @@ from Crypto.Cipher import AES
 from Crypto import Random
 import threading
 import hashlib
-import random
 import socket
 import base64
 import time
@@ -66,7 +65,12 @@ class Server:
 # Stuff you read
 class Game:
     def __init__(self):
-        self.quiz_list = {"Quiz A": {"10+10": 20, "10+15": 25, "20+20": 40}, "Quiz B": ["5*10", "10*10"], "Quiz C": ["20-10", "30-15"], "Eval Test": ["quit()"]}
+        self.quiz_list = {"Quiz A": {"10+10": [20, 99, 98, 97], "10+15": [25, 99, 98, 97], "20+20": [40, 99, 98, 97]},
+                          "Quiz B": {"5*10": [50, 1, 2, 3], "10*10": [100, 1, 2, 3]}, "Quiz C": {"20-10": [10, 99, 98, 97], "30-15": [15, 99, 98, 97]}}
+        '''
+        contains the quiz name, each question, and each answer including the incorrect answers, where the correct
+        answer will always be the first item in the "answer list"
+        '''
 
     def process_request(self, msg, username):
         msg = msg.lower()

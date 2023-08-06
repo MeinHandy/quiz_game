@@ -85,6 +85,7 @@ class Client:
 
 class Game:  # everything in this was written by andre
     def __init__(self):
+        self.answer = None
         self.quiz_start_button = None
         self.quiz_list_box = None
         self.selected_quiz = None
@@ -122,10 +123,10 @@ class Game:  # everything in this was written by andre
 
     def raw_request(self, message):  # to bypass process_response
         request = str(message)  # May contain 8192 bytes
-        print('sending "%s"' % request)
+        # print('sending "%s"' % request)  # debug message
         client.encrypt_and_send_msg(request)  # Message
         response = client.receive_and_decrypt_msg_response()  # Response
-        print('received "%s"' % response)
+        # print('received "%s"' % response)  # debug message
         return response
 
     def main_menu(self):
@@ -165,19 +166,42 @@ class Game:  # everything in this was written by andre
         self.quiz_start_button.grid()
 
     def quiz_start(self):
-        quiz_name = self.quiz_list_box.get()
+        selected_quiz = self.quiz_list_box.get()
         self.quiz_menu_frame.destroy()
-        quiz_questions = self.quiz_list[quiz_name]  # stores the quiz questions
-        print(quiz_questions)
+        quiz_data = self.quiz_list[selected_quiz]
+        quiz_questions = list(quiz_data.keys())
+        random.shuffle(quiz_questions)
+        question = quiz_questions[random.randint(0, len(quiz_questions) - 1)]
+        self.answer = quiz_data[question][0]  # answer
+        possible_answers = quiz_data[question]
+        random.shuffle(possible_answers)
+        answer_a = possible_answers[0]
+        answer_b = possible_answers[1]
+        answer_c = possible_answers[2]
+        answer_d = possible_answers[3]
 
-        quiz_frame = ttk.LabelFrame(self.root, text=quiz_name)
+        quiz_frame = ttk.LabelFrame(self.root, text=selected_quiz)
         quiz_frame.grid()
-        quiz_question = Label(quiz_frame, textvariable=question)
-        quiz_question.grid()
+        quiz_question = Label(quiz_frame, text=question)
+        quiz_question.grid(row=0, column=0, columnspan=3)
+        answer_button_a = ttk.Button(quiz_frame, text=answer_a, command=lambda response=answer_a: self.check_answer(response))
+        answer_button_a.grid(row=1, column=1)
+        answer_button_b = ttk.Button(quiz_frame, text=answer_b, command=lambda response=answer_b: self.check_answer(response))
+        answer_button_b.grid(row=1, column=2)
+        answer_button_c = ttk.Button(quiz_frame, text=answer_c, command=lambda response=answer_c: self.check_answer(response))
+        answer_button_c.grid(row=2, column=1)
+        answer_button_d = ttk.Button(quiz_frame, text=answer_d, command=lambda response=answer_d: self.check_answer(response))
+        answer_button_d.grid(row=2, column=2)
 
-        def receiver():  # allows for looping with tkinter
-            self.root.after(1000, receiver)
-        receiver()
+    def check_answer(self, response):
+        if response == self.answer:
+            print("congrats")
+        else:
+            print("fail")
+
+
+def receiver(self):  # allows for looping with tkinter
+    self.root.after(1000, self.receiver)
 
 
 if __name__ == '__main__':
