@@ -85,6 +85,7 @@ class Client:
 
 class Game:  # everything in this was written by andre
     def __init__(self):
+        self.quiz_questions = None
         self.answer = None
         self.quiz_start_button = None
         self.quiz_list_box = None
@@ -123,10 +124,10 @@ class Game:  # everything in this was written by andre
 
     def raw_request(self, message):  # to bypass process_response
         request = str(message)  # May contain 8192 bytes
-        # print('sending "%s"' % request)  # debug message
+        print('sending "%s"' % request)  # debug message
         client.encrypt_and_send_msg(request)  # Message
         response = client.receive_and_decrypt_msg_response()  # Response
-        # print('received "%s"' % response)  # debug message
+        print('received "%s"' % response)  # debug message
         return response
 
     def main_menu(self):
@@ -169,9 +170,9 @@ class Game:  # everything in this was written by andre
         selected_quiz = self.quiz_list_box.get()
         self.quiz_menu_frame.destroy()
         quiz_data = self.quiz_list[selected_quiz]
-        quiz_questions = list(quiz_data.keys())
-        random.shuffle(quiz_questions)
-        question = quiz_questions[random.randint(0, len(quiz_questions) - 1)]
+        self.quiz_questions = list(quiz_data.keys())
+        random.shuffle(self.quiz_questions)
+        question = self.quiz_questions[random.randint(0, len(self.quiz_questions) - 1)]
         self.answer = quiz_data[question][0]  # answer
         possible_answers = quiz_data[question]
         random.shuffle(possible_answers)
@@ -195,7 +196,9 @@ class Game:  # everything in this was written by andre
 
     def check_answer(self, response):
         if response == self.answer:
-            print("congrats")
+            print(self.quiz_questions)
+            self.quiz_questions.remove(self.answer)
+            print(self.quiz_questions)
         else:
             print("fail")
 
