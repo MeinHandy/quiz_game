@@ -1,4 +1,3 @@
-# Super, Fucking, Simple.
 from Crypto.Cipher import AES
 from Crypto import Random
 import hashlib
@@ -10,9 +9,9 @@ from tkinter import *
 from tkinter import ttk
 import ast
 import random
+import copy
 
 
-# https://stackoverflow.com/questions/12524994/encrypt-and-decrypt-using-pycrypto-aes-256#comment80992309_21928790
 class AESCipher(object):
     def __init__(self, key):
         self.bs = AES.block_size
@@ -83,8 +82,36 @@ class Client:
         return self.encryptor.decrypt(self.socket.recv(16384))
 
 
+def raw_request(message):  # to bypass process_response
+    request = str(message)  # May contain 8192 bytes
+    print('sending "%s"' % request)  # debug message
+    client.encrypt_and_send_msg(request)  # Message
+    response = client.receive_and_decrypt_msg_response()  # Response
+    print('received "%s"' % response)  # debug message
+    return response
+
+
+def process_response(response):
+    command_chain = []
+    command = ""
+    for letter in response + ',':
+        if letter == ',':
+            command_chain.append(command)
+            command = ""
+        else:
+            command += letter
+    return command_chain
+
+
 class Game:  # everything in this was written by andre
     def __init__(self):
+        self.feedback = None
+        self.correct = 0
+        self.incorrect = 0
+        self.quiz_list_constant = None
+        self.quiz_frame = None
+        self.quiz_data = None
+        self.question = None
         self.quiz_questions = None
         self.answer = None
         self.quiz_start_button = None
@@ -102,33 +129,14 @@ class Game:  # everything in this was written by andre
         self.root = Tk()
         self.main_menu()
 
-    def process_response(self, response):
-        command_chain = []
-        command = ""
-        for letter in response + ',':
-            if letter == ',':
-                command_chain.append(command)
-                command = ""
-            else:
-                command += letter
-        return command_chain
-
     def send_request(self, message):
         request = str(message)  # May contain 8192 bytes
         print('sending "%s"' % request)
         client.encrypt_and_send_msg(request)  # Message
         response = client.receive_and_decrypt_msg_response()  # Response
         print('received "%s"' % response)
-        command_chain = self.process_response(response)
+        command_chain = process_response(response)
         return command_chain
-
-    def raw_request(self, message):  # to bypass process_response
-        request = str(message)  # May contain 8192 bytes
-        print('sending "%s"' % request)  # debug message
-        client.encrypt_and_send_msg(request)  # Message
-        response = client.receive_and_decrypt_msg_response()  # Response
-        print('received "%s"' % response)  # debug message
-        return response
 
     def main_menu(self):
         self.server_ips = {"localhost": 34197, "127.0.0.1": 34197}
@@ -149,13 +157,14 @@ class Game:  # everything in this was written by andre
         client.encryption_setup()
         client.connect_server(host=(self.server_ip, self.server_port), password="joe")
         client.encryptor = AESCipher(str(client.password))
-        self.quiz_list = self.raw_request("quiz_list")
-        self.quiz_list = self.quiz_list[:-1]  # removes annoying comma
-        self.quiz_list = ast.literal_eval(self.quiz_list)
+        self.quiz_list_constant = raw_request("quiz_list")
+        self.quiz_list_constant = self.quiz_list_constant[:-1]  # removes annoying comma
+        self.quiz_list_constant = ast.literal_eval(self.quiz_list_constant)
         self.menu_frame.destroy()  # destroys the menu so the new ui can be displayed
         self.quiz_menu()
 
     def quiz_menu(self):
+        self.quiz_list = copy.deepcopy(self.quiz_list_constant)  # resets the list
         self.quiz_menu_frame = ttk.LabelFrame(self.root)
         self.quiz_menu_frame.grid()
         self.selected_quiz = StringVar()
@@ -167,40 +176,65 @@ class Game:  # everything in this was written by andre
         self.quiz_start_button.grid()
 
     def quiz_start(self):
-        selected_quiz = self.quiz_list_box.get()
+        self.correct = 0
+        self.incorrect = 0
+        self.selected_quiz = self.quiz_list_box.get()
         self.quiz_menu_frame.destroy()
-        quiz_data = self.quiz_list[selected_quiz]
-        self.quiz_questions = list(quiz_data.keys())
+        self.quiz_data = self.quiz_list[self.selected_quiz]
+        self.quiz_questions = list(self.quiz_data.keys())
         random.shuffle(self.quiz_questions)
-        question = self.quiz_questions[random.randint(0, len(self.quiz_questions) - 1)]
-        self.answer = quiz_data[question][0]  # answer
-        possible_answers = quiz_data[question]
+        self.next_question()
+
+    def next_question(self):
+        self.question = self.quiz_questions[random.randint(0, len(self.quiz_questions) - 1)]  # picks a random question
+        self.answer = self.quiz_data[self.question][0]  # answer
+        possible_answers = self.quiz_data[self.question]
         random.shuffle(possible_answers)
-        answer_a = possible_answers[0]
-        answer_b = possible_answers[1]
+        answer_a = possible_answers[0]  # sets the buttons to the randomized list, hardcoded because only 4 questions
+        answer_b = possible_answers[1]  # possible
         answer_c = possible_answers[2]
         answer_d = possible_answers[3]
 
-        quiz_frame = ttk.LabelFrame(self.root, text=selected_quiz)
-        quiz_frame.grid()
-        quiz_question = Label(quiz_frame, text=question)
+        self.quiz_frame = ttk.LabelFrame(self.root, text=self.selected_quiz)
+        self.quiz_frame.grid()
+        quiz_question = Label(self.quiz_frame, text=self.question)
         quiz_question.grid(row=0, column=0, columnspan=3)
-        answer_button_a = ttk.Button(quiz_frame, text=answer_a, command=lambda response=answer_a: self.check_answer(response))
+        answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,
+                                     command=lambda response=answer_a, key="a": self.check_answer(response, key))
         answer_button_a.grid(row=1, column=1)
-        answer_button_b = ttk.Button(quiz_frame, text=answer_b, command=lambda response=answer_b: self.check_answer(response))
+        answer_button_b = ttk.Button(self.quiz_frame, text=answer_b,
+                                     command=lambda response=answer_b, key="b": self.check_answer(response, key))
         answer_button_b.grid(row=1, column=2)
-        answer_button_c = ttk.Button(quiz_frame, text=answer_c, command=lambda response=answer_c: self.check_answer(response))
+        answer_button_c = ttk.Button(self.quiz_frame, text=answer_c,
+                                     command=lambda response=answer_c, key="c": self.check_answer(response, key))
         answer_button_c.grid(row=2, column=1)
-        answer_button_d = ttk.Button(quiz_frame, text=answer_d, command=lambda response=answer_d: self.check_answer(response))
+        answer_button_d = ttk.Button(self.quiz_frame, text=answer_d,
+                                     command=lambda response=answer_d, key="d": self.check_answer(response, key))
         answer_button_d.grid(row=2, column=2)
 
-    def check_answer(self, response):
-        if response == self.answer:
-            print(self.quiz_questions)
-            self.quiz_questions.remove(self.answer)
-            print(self.quiz_questions)
+    def check_answer(self, response, key):
+        self.feedback = StringVar()
+        if response == self.answer:  # checks if user was correct
+            self.quiz_questions.remove(self.question)
+            self.quiz_frame.destroy()  # resets screen
+            self.correct += 1
+
+            if len(self.quiz_questions) > 0:  # if there are more questions continue
+                self.next_question()  # loops back to next question
+            else:
+                self.post_quiz()
         else:
-            print("fail")
+            self.quiz_questions.remove(self.question)
+            self.quiz_frame.destroy()  # resets screen
+            self.incorrect += 1
+            if len(self.quiz_questions) > 0:  # if there are more questions continue
+                self.next_question()  # loops back to next question
+            else:
+                self.post_quiz()
+
+    def post_quiz(self):
+        print('score: {}/{}'.format(self.correct,  self.correct+self.incorrect))  # prints the total score of quiz
+        self.quiz_menu()
 
 
 def receiver(self):  # allows for looping with tkinter

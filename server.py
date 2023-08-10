@@ -65,8 +65,11 @@ class Server:
 # Stuff you read
 class Game:
     def __init__(self):
-        self.quiz_list = {"Quiz A": {"10+10": [20, 99, 98, 97], "10+15": [25, 99, 98, 97], "20+20": [40, 99, 98, 97]},
-                          "Quiz B": {"5*10": [50, 1, 2, 3], "10*10": [100, 1, 2, 3]}, "Quiz C": {"20-10": [10, 99, 98, 97], "30-15": [15, 99, 98, 97]}}
+        self.quiz_list = {"Addition": {"10+10": [20, 99, 98, 97], "10+15": [25, 99, 98, 97], "20+20": [40, 99, 98, 97]},
+                          "Multiplication": {"5*10": [50, 1, 2, 3], "10*10": [100, 1, 2, 3]},
+                          "Subtraction": {"20-10": [10, 99, 98, 97], "30-15": [15, 99, 98, 97]},
+                          "The alphabet": {"What is the first letter of the alphabet?": ['a', 'b', 'c', 'd'], "What is the last letter of the alphabet?": ['z', 'y', 'x', 'w']}
+                          }
         '''
         contains the quiz name, each question, and each answer including the incorrect answers, where the correct
         answer will always be the first item in the "answer list"
