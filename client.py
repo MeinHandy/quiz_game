@@ -103,8 +103,22 @@ def process_response(response):
     return command_chain
 
 
-class Game:  # everything in this was written by andre
+class Game:  # everything in this class was written by andre
     def __init__(self):
+        self.add_question_button = None
+        self.question_input = None
+        self.add_question = None
+        self.wrong_answer_c = None
+        self.wrong_answer_b = None
+        self.wrong_answer_a = None
+        self.fake_answer_frame = None
+        self.correct_answer = None
+        self.correct_frame = None
+        self.quiz_name = None
+        self.question_input_frame = None
+        self.name_frame = None
+        self.refresh_quiz = None
+        self.create_quiz_button = None
         self.feedback = None
         self.correct = 0
         self.incorrect = 0
@@ -155,13 +169,17 @@ class Game:  # everything in this was written by andre
         self.server_ip = self.server_list.get()
         self.server_port = self.server_ips.get(self.server_list.get())
         client.encryption_setup()
-        client.connect_server(host=(self.server_ip, self.server_port), password="joe")
+        client.connect_server(host=(self.server_ip, self.server_port), password="user")  # password is more like a username
         client.encryptor = AESCipher(str(client.password))
+        self.quiz_request()
+        self.menu_frame.destroy()  # destroys the menu so the new ui can be displayed
+        self.quiz_menu()
+
+    def quiz_request(self):  # allows for quick request/refresh of server list
         self.quiz_list_constant = raw_request("quiz_list")
         self.quiz_list_constant = self.quiz_list_constant[:-1]  # removes annoying comma
         self.quiz_list_constant = ast.literal_eval(self.quiz_list_constant)
-        self.menu_frame.destroy()  # destroys the menu so the new ui can be displayed
-        self.quiz_menu()
+        self.quiz_list = copy.deepcopy(self.quiz_list_constant)  # resets the list
 
     def quiz_menu(self):
         self.quiz_list = copy.deepcopy(self.quiz_list_constant)  # resets the list
@@ -174,6 +192,10 @@ class Game:  # everything in this was written by andre
         self.quiz_list_box.grid()
         self.quiz_start_button = ttk.Button(self.quiz_menu_frame, text="Start Quiz", command=self.quiz_start)
         self.quiz_start_button.grid()
+        self.refresh_quiz = ttk.Button(self.quiz_menu_frame, text="Refresh list", command=self.quiz_request)
+        self.refresh_quiz.grid()
+        self.create_quiz_button = ttk.Button(self.quiz_menu_frame, text="Create a quiz", command=self.quiz_creator)
+        self.create_quiz_button.grid(pady=20)
 
     def quiz_start(self):
         self.correct = 0
@@ -200,19 +222,19 @@ class Game:  # everything in this was written by andre
         quiz_question = Label(self.quiz_frame, text=self.question)
         quiz_question.grid(row=0, column=0, columnspan=3)
         answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,
-                                     command=lambda response=answer_a, key="a": self.check_answer(response, key))
+                                     command=lambda response=answer_a, key="a": self.check_answer(response))
         answer_button_a.grid(row=1, column=1)
         answer_button_b = ttk.Button(self.quiz_frame, text=answer_b,
-                                     command=lambda response=answer_b, key="b": self.check_answer(response, key))
+                                     command=lambda response=answer_b, key="b": self.check_answer(response))
         answer_button_b.grid(row=1, column=2)
         answer_button_c = ttk.Button(self.quiz_frame, text=answer_c,
-                                     command=lambda response=answer_c, key="c": self.check_answer(response, key))
+                                     command=lambda response=answer_c, key="c": self.check_answer(response))
         answer_button_c.grid(row=2, column=1)
         answer_button_d = ttk.Button(self.quiz_frame, text=answer_d,
-                                     command=lambda response=answer_d, key="d": self.check_answer(response, key))
+                                     command=lambda response=answer_d, key="d": self.check_answer(response))
         answer_button_d.grid(row=2, column=2)
 
-    def check_answer(self, response, key):
+    def check_answer(self, response):
         self.feedback = StringVar()
         if response == self.answer:  # checks if user was correct
             self.quiz_questions.remove(self.question)
@@ -236,6 +258,44 @@ class Game:  # everything in this was written by andre
         print('score: {}/{}'.format(self.correct,  self.correct+self.incorrect))  # prints the total score of quiz
         self.quiz_menu()
 
+    def quiz_creator(self):
+        self.quiz_menu_frame.destroy()
+
+        self.name_frame = ttk.LabelFrame(self.root, text="Quiz Name")
+        self.name_frame.grid()
+        self.quiz_name = ttk.Entry(self.name_frame)
+        self.quiz_name.grid()
+
+        self.question_input_frame = ttk.LabelFrame(self.root, text="Question")
+        self.question_input_frame.grid()
+        self.question_input = ttk.Entry(self.question_input_frame)
+        self.question_input.grid()
+        
+        self.correct_frame = ttk.LabelFrame(self.root, text="Correct answer")
+        self.correct_frame.grid()
+        self.correct_answer = ttk.Entry(self.correct_frame)
+        self.correct_answer.grid()
+        
+        self.fake_answer_frame = ttk.LabelFrame(self.root, text="Incorrect answers")
+        self.fake_answer_frame.grid()
+        self.wrong_answer_a = ttk.Entry(self.fake_answer_frame)
+        self.wrong_answer_a.grid()
+        self.wrong_answer_b = ttk.Entry(self.fake_answer_frame)
+        self.wrong_answer_b.grid()
+        self.wrong_answer_c = ttk.Entry(self.fake_answer_frame)
+        self.wrong_answer_c.grid()
+        
+        self.add_question_button = ttk.Button(self.root, text="Add question", command=self.add_question)
+        self.add_question_button.grid()
+
+    def add_question(self):
+        quiz_name = self.quiz_name.get()
+        question = self.question_input.get()
+        answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),
+                       self.wrong_answer_b.get(), self.wrong_answer_c.get()]
+        question_data = {quiz_name}
+        quiz_name[question] = answer_list
+        print(question_data)
 
 def receiver(self):  # allows for looping with tkinter
     self.root.after(1000, self.receiver)

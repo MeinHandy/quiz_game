@@ -8,6 +8,7 @@ import base64
 import time
 import rsa
 import os
+import json
 
 
 # Stuff you do not read
@@ -65,11 +66,23 @@ class Server:
 # Stuff you read
 class Game:
     def __init__(self):
-        self.quiz_list = {"Addition": {"10+10": [20, 99, 98, 97], "10+15": [25, 99, 98, 97], "20+20": [40, 99, 98, 97]},
-                          "Multiplication": {"5*10": [50, 1, 2, 3], "10*10": [100, 1, 2, 3]},
-                          "Subtraction": {"20-10": [10, 99, 98, 97], "30-15": [15, 99, 98, 97]},
-                          "The alphabet": {"What is the first letter of the alphabet?": ['a', 'b', 'c', 'd'], "What is the last letter of the alphabet?": ['z', 'y', 'x', 'w']}
-                          }
+        if os.path.exists("quizlist"):  # checks if a quizlist already exists
+            print("Reading quiz data, please wait...")
+            with open('quizlist') as quizlist:
+                data = quizlist.read()
+                self.quiz_list = json.loads(data)
+        else:  # loads a default quiz list and saves it as a file
+            print("Creating list, please wait...")
+            self.quiz_list = {
+                "Addition": {"10+10": [20, 99, 98, 97], "10+15": [25, 99, 98, 97], "20+20": [40, 99, 98, 97]},
+                "Multiplication": {"5*10": [50, 1, 2, 3], "10*10": [100, 1, 2, 3]},
+                "Subtraction": {"20-10": [10, 99, 98, 97], "30-15": [15, 99, 98, 97]},
+                "The alphabet": {"What is the first letter of the alphabet?": ['a', 'b', 'c', 'd'],
+                                 "What is the last letter of the alphabet?": ['z', 'y', 'x', 'w']}
+                }
+            with open('quizlist', "x") as quizlist:
+                json.dump(self.quiz_list, quizlist)
+
         '''
         contains the quiz name, each question, and each answer including the incorrect answers, where the correct
         answer will always be the first item in the "answer list"
