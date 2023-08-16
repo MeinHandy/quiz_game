@@ -54,7 +54,7 @@ class Client:
         self.host = host
         self.password = hashlib.sha3_224(password.encode()).digest()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print('connecting to %s port %s' % (host[0], host[1]))
+        # print('connecting to %s port %s' % (host[0], host[1]))
         self.socket.connect((host[0], host[1]))
 
     # Set up encryption
@@ -84,10 +84,10 @@ class Client:
 
 def raw_request(message):  # to bypass process_response
     request = str(message)  # May contain 8192 bytes
-    print('sending "%s"' % request)  # debug message
+    # print('sending "%s"' % request)  # debug message
     client.encrypt_and_send_msg(request)  # Message
     response = client.receive_and_decrypt_msg_response()  # Response
-    print('received "%s"' % response)  # debug message
+    # print('received "%s"' % response)  # debug message
     return response
 
 
@@ -105,6 +105,8 @@ def process_response(response):
 
 class Game:  # everything in this class was written by andre
     def __init__(self):
+        self.new_quiz = {}
+        self.finish_button = None
         self.add_question_button = None
         self.question_input = None
         self.add_question = None
@@ -145,10 +147,10 @@ class Game:  # everything in this class was written by andre
 
     def send_request(self, message):
         request = str(message)  # May contain 8192 bytes
-        print('sending "%s"' % request)
+        # print('sending "%s"' % request)
         client.encrypt_and_send_msg(request)  # Message
         response = client.receive_and_decrypt_msg_response()  # Response
-        print('received "%s"' % response)
+        # print('received "%s"' % response)
         command_chain = process_response(response)
         return command_chain
 
@@ -222,16 +224,16 @@ class Game:  # everything in this class was written by andre
         quiz_question = Label(self.quiz_frame, text=self.question)
         quiz_question.grid(row=0, column=0, columnspan=3)
         answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,
-                                     command=lambda response=answer_a, key="a": self.check_answer(response))
+                                     command=lambda response=answer_a: self.check_answer(response))
         answer_button_a.grid(row=1, column=1)
         answer_button_b = ttk.Button(self.quiz_frame, text=answer_b,
-                                     command=lambda response=answer_b, key="b": self.check_answer(response))
+                                     command=lambda response=answer_b: self.check_answer(response))
         answer_button_b.grid(row=1, column=2)
         answer_button_c = ttk.Button(self.quiz_frame, text=answer_c,
-                                     command=lambda response=answer_c, key="c": self.check_answer(response))
+                                     command=lambda response=answer_c: self.check_answer(response))
         answer_button_c.grid(row=2, column=1)
         answer_button_d = ttk.Button(self.quiz_frame, text=answer_d,
-                                     command=lambda response=answer_d, key="d": self.check_answer(response))
+                                     command=lambda response=answer_d: self.check_answer(response))
         answer_button_d.grid(row=2, column=2)
 
     def check_answer(self, response):
@@ -284,20 +286,30 @@ class Game:  # everything in this class was written by andre
         self.wrong_answer_b.grid()
         self.wrong_answer_c = ttk.Entry(self.fake_answer_frame)
         self.wrong_answer_c.grid()
-        
-        self.add_question_button = ttk.Button(self.root, text="Add question", command=self.add_question)
+
+        self.add_question_button = ttk.Button(self.root, text="Add question", command=self.add_question_func)
         self.add_question_button.grid()
 
-    def add_question(self):
+        self.finish_button = ttk.Button(self.root, text="Finished", command=self.finished_new_quiz)
+        self.finish_button.grid()
+
+    def add_question_func(self):
+        print('adding question')
         quiz_name = self.quiz_name.get()
-        question = self.question_input.get()
         answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),
                        self.wrong_answer_b.get(), self.wrong_answer_c.get()]
-        question_data = {quiz_name}
-        quiz_name[question] = answer_list
-        print(question_data)
+        question = self.question_input.get()
+        question_data = {question: answer_list}
+        new_quiz = {}
+        new_quiz[quiz_name] = question_data
+        self.quiz_list_constant.update(new_quiz)
+        print('question added', self.quiz_list_constant)
 
-def receiver(self):  # allows for looping with tkinter
+    def finished_new_quiz(self):
+        self.quiz_menu()
+
+
+def receiver(self):  # allows for looping with tkinter, currently unused
     self.root.after(1000, self.receiver)
 
 
