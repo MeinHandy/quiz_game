@@ -137,7 +137,7 @@ class Game:  # everything in this class was written by andre
         self.menu_frame = None
         self.quiz_list = None
         self.server_list = None
-        self.server_ips = None
+        self.server_ips = {"localhost": 34197, "127.0.0.1": 34197}  # both localhost, but for demonstration purposes
         self.client = None
         self.server_port = None
         self.server_ip = None
@@ -155,7 +155,6 @@ class Game:  # everything in this class was written by andre
         return command_chain
 
     def main_menu(self):
-        self.server_ips = {"localhost": 34197, "127.0.0.1": 34197}
         self.menu_frame = ttk.LabelFrame(self.root, text="game")
         self.menu_frame.grid()
         join_button = ttk.Button(self.menu_frame, text="join", command=self.join_server)
