@@ -9,7 +9,7 @@ import time
 import rsa
 import os
 import json
-
+import ast
 
 # Stuff you do not read
 # https://stackoverflow.com/questions/12524994/encrypt-and-decrypt-using-pycrypto-aes-256#comment80992309_21928790
@@ -66,7 +66,6 @@ class Server:
 # Stuff you read
 class Game:
     def __init__(self):
-        print('new')
         if os.path.exists("quizlist"):  # checks if a quizlist already exists
             print("Reading quiz data, please wait...")
             with open('quizlist') as quizlist:
@@ -90,6 +89,7 @@ class Game:
         '''
 
     def process_request(self, msg, username):
+        '''
         msg = msg.lower()
         command_chain = []
         command = ""
@@ -99,11 +99,21 @@ class Game:
                 command = ""
             else:
                 command += letter
+        '''
 
         response = ""
-        for item in range(len(command_chain)):  # Start processing command_chain here
-            if command_chain[item] == "quiz_list":
-                response += str(self.quiz_list) + ','
+        # for item in range(len(command_chain)):  # Start processing command_chain here
+        if msg == "quiz_list":
+            response += str(self.quiz_list) + ','
+        elif msg[0] == "$":  # an identifier to see if the first letter is a dollar sign, designated for new quizzes
+            msg = msg[1:]  # remove the dollar sign
+            msg = ast.literal_eval(msg)  # converts the string (o.o)
+            quiz_name = list(msg.keys())[0]
+            print(quiz_name, 'name')
+            print(msg[quiz_name], 'quiz data?')
+            self.quiz_list[quiz_name] = msg[quiz_name]
+            print(self.quiz_list)
+            response = "Quiz submitted"
         return response  # What client sees
 
 
