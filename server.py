@@ -66,6 +66,7 @@ class Server:
 # Stuff you read
 class Game:
     def __init__(self):
+        print('new')
         if os.path.exists("quizlist"):  # checks if a quizlist already exists
             print("Reading quiz data, please wait...")
             with open('quizlist') as quizlist:

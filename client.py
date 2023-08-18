@@ -293,18 +293,23 @@ class Game:  # everything in this class was written by andre
         self.finish_button.grid()
 
     def add_question_func(self):
+        print('new')
         print('adding question')
         quiz_name = self.quiz_name.get()
-        answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),
+        answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
                        self.wrong_answer_b.get(), self.wrong_answer_c.get()]
         question = self.question_input.get()
-        question_data = {question: answer_list}
-        new_quiz = {}
-        new_quiz[quiz_name] = question_data
-        self.quiz_list_constant.update(new_quiz)
+        question_data = {question: answer_list}  # binds the question to the answers
+        self.quiz_list_constant.update({quiz_name: {question: answer_list}})
         print('question added', self.quiz_list_constant)
 
     def finished_new_quiz(self):
+        self.name_frame.destroy()
+        self.question_input_frame.destroy()
+        self.correct_frame.destroy()
+        self.fake_answer_frame.destroy()
+        self.add_question_button.destroy()
+        self.finish_button.destroy()
         self.quiz_menu()
 
 
