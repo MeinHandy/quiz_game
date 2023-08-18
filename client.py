@@ -4,6 +4,7 @@ import hashlib
 import socket
 import base64
 import rsa
+#  I'm using the following
 import os
 from tkinter import *
 from tkinter import ttk
@@ -12,7 +13,7 @@ import random
 import copy
 
 
-class AESCipher(object):
+class AESCipher(object):  # not mine
     def __init__(self, key):
         self.bs = AES.block_size
         self.key = hashlib.sha256(key.encode()).digest()
@@ -37,7 +38,7 @@ class AESCipher(object):
         return s[:-ord(s[len(s) - 1:])]
 
 
-class Client:
+class Client:  # not mine
     def __init__(self):
         self.client_private_key = None
         self.client_public_key = None
@@ -91,7 +92,7 @@ def raw_request(message):  # to bypass process_response
     return response
 
 
-def process_response(response):
+def process_response(response):  # not mine part of lib
     command_chain = []
     command = ""
     for letter in response + ',':
@@ -105,6 +106,8 @@ def process_response(response):
 
 class Game:  # everything in this class was written by andre
     def __init__(self):
+        self.quiz_name_input = None
+        self.question_data = None
         self.new_quiz = {}
         self.finish_button = None
         self.add_question_button = None
@@ -154,7 +157,7 @@ class Game:  # everything in this class was written by andre
         command_chain = process_response(response)
         return command_chain
 
-    def main_menu(self):
+    def main_menu(self):  # sets the menu up
         self.menu_frame = ttk.LabelFrame(self.root, text="game")
         self.menu_frame.grid()
         join_button = ttk.Button(self.menu_frame, text="join", command=self.join_server)
@@ -162,17 +165,20 @@ class Game:  # everything in this class was written by andre
         selected_server = StringVar()
         selected_server.set(list(self.server_ips.keys())[0])
         self.server_list = ttk.Combobox(self.menu_frame, textvariable=selected_server, state="readonly")
-        self.server_list['values'] = list(self.server_ips)
+        self.server_list['values'] = list(self.server_ips)  # sets the server list up
         self.server_list.grid()
         self.root.mainloop()
 
-    def join_server(self):
+    def join_server(self):  # starts connection
         self.server_ip = self.server_list.get()
         self.server_port = self.server_ips.get(self.server_list.get())
         client.encryption_setup()
         client.connect_server(host=(self.server_ip, self.server_port), password="user")  # password is more like a username
         client.encryptor = AESCipher(str(client.password))
-        self.quiz_request()
+        self.quiz_list_constant = raw_request("quiz_list")  # not running on the function
+        self.quiz_list_constant = self.quiz_list_constant[:-1]  # removes annoying comma
+        self.quiz_list_constant = ast.literal_eval(self.quiz_list_constant)
+        self.quiz_list = copy.deepcopy(self.quiz_list_constant)  # updates the flexible self.quiz_list
         self.menu_frame.destroy()  # destroys the menu so the new ui can be displayed
         self.quiz_menu()
 
@@ -180,17 +186,18 @@ class Game:  # everything in this class was written by andre
         self.quiz_list_constant = raw_request("quiz_list")
         self.quiz_list_constant = self.quiz_list_constant[:-1]  # removes annoying comma
         self.quiz_list_constant = ast.literal_eval(self.quiz_list_constant)
-        self.quiz_list = copy.deepcopy(self.quiz_list_constant)  # resets the list
+        self.quiz_list = copy.deepcopy(self.quiz_list_constant)  # updates the flexible self.quiz_list
+        self.quiz_list_box['values'] = list(self.quiz_list)  # updates the quiz list box to newest data
 
-    def quiz_menu(self):
+    def quiz_menu(self):  # sets menu up
         self.quiz_list = copy.deepcopy(self.quiz_list_constant)  # resets the list
-        self.quiz_menu_frame = ttk.LabelFrame(self.root)
+        self.quiz_menu_frame = ttk.LabelFrame(self.root)  # menu frame to store everything
         self.quiz_menu_frame.grid()
-        self.selected_quiz = StringVar()
+        self.selected_quiz = StringVar()  # variable to access combobox
         self.selected_quiz.set(list(self.quiz_list.keys())[0])
         self.quiz_list_box = ttk.Combobox(self.quiz_menu_frame, textvariable=self.selected_quiz, state="readonly")
         self.quiz_list_box['values'] = list(self.quiz_list)
-        self.quiz_list_box.grid()
+        self.quiz_list_box.grid()  # all just button setups
         self.quiz_start_button = ttk.Button(self.quiz_menu_frame, text="Start Quiz", command=self.quiz_start)
         self.quiz_start_button.grid()
         self.refresh_quiz = ttk.Button(self.quiz_menu_frame, text="Refresh list", command=self.quiz_request)
@@ -198,7 +205,7 @@ class Game:  # everything in this class was written by andre
         self.create_quiz_button = ttk.Button(self.quiz_menu_frame, text="Create a quiz", command=self.quiz_creator)
         self.create_quiz_button.grid(pady=20)
 
-    def quiz_start(self):
+    def quiz_start(self):  # starts the quiz and sets data up
         self.correct = 0
         self.incorrect = 0
         self.selected_quiz = self.quiz_list_box.get()
@@ -208,7 +215,7 @@ class Game:  # everything in this class was written by andre
         random.shuffle(self.quiz_questions)
         self.next_question()
 
-    def next_question(self):
+    def next_question(self):  # moves to next question, is also first question
         self.question = self.quiz_questions[random.randint(0, len(self.quiz_questions) - 1)]  # picks a random question
         self.answer = self.quiz_data[self.question][0]  # answer
         possible_answers = self.quiz_data[self.question]
@@ -222,7 +229,7 @@ class Game:  # everything in this class was written by andre
         self.quiz_frame.grid()
         quiz_question = Label(self.quiz_frame, text=self.question)
         quiz_question.grid(row=0, column=0, columnspan=3)
-        answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,
+        answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,  # sets up all the answer buttons
                                      command=lambda response=answer_a: self.check_answer(response))
         answer_button_a.grid(row=1, column=1)
         answer_button_b = ttk.Button(self.quiz_frame, text=answer_b,
@@ -262,55 +269,59 @@ class Game:  # everything in this class was written by andre
     def quiz_creator(self):
         self.quiz_menu_frame.destroy()
 
-        self.name_frame = ttk.LabelFrame(self.root, text="Quiz Name")
+        self.name_frame = ttk.LabelFrame(self.root, text="Quiz Name")  # quiz name input field
         self.name_frame.grid()
-        self.quiz_name = ttk.Entry(self.name_frame)
-        self.quiz_name.grid()
+        self.quiz_name_input = ttk.Entry(self.name_frame)
+        self.quiz_name_input.grid()
 
-        self.question_input_frame = ttk.LabelFrame(self.root, text="Question")
+        self.question_input_frame = ttk.LabelFrame(self.root, text="Question")  # question input field
         self.question_input_frame.grid()
         self.question_input = ttk.Entry(self.question_input_frame)
         self.question_input.grid()
         
-        self.correct_frame = ttk.LabelFrame(self.root, text="Correct answer")
+        self.correct_frame = ttk.LabelFrame(self.root, text="Correct answer")  # correct answer input
         self.correct_frame.grid()
         self.correct_answer = ttk.Entry(self.correct_frame)
         self.correct_answer.grid()
         
         self.fake_answer_frame = ttk.LabelFrame(self.root, text="Incorrect answers")
         self.fake_answer_frame.grid()
-        self.wrong_answer_a = ttk.Entry(self.fake_answer_frame)
+        self.wrong_answer_a = ttk.Entry(self.fake_answer_frame)  # inits the entry boxes
         self.wrong_answer_a.grid()
         self.wrong_answer_b = ttk.Entry(self.fake_answer_frame)
         self.wrong_answer_b.grid()
         self.wrong_answer_c = ttk.Entry(self.fake_answer_frame)
         self.wrong_answer_c.grid()
 
-        self.add_question_button = ttk.Button(self.root, text="Add question", command=self.add_question_func)
+        self.add_question_button = ttk.Button(self.root, text="Add question", command=self.add_question_func)  # add q
         self.add_question_button.grid()
 
-        self.finish_button = ttk.Button(self.root, text="Finished", command=self.finished_new_quiz)
+        self.finish_button = ttk.Button(self.root, text="Finished", command=self.finished_new_quiz)  # finished button
         self.finish_button.grid()
 
     def add_question_func(self):
         print('new')
         print('adding question')
-        quiz_name = self.quiz_name.get()
+        self.quiz_name = self.quiz_name_input.get()
         answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
                        self.wrong_answer_b.get(), self.wrong_answer_c.get()]
         question = self.question_input.get()
-        question_data = {question: answer_list}  # binds the question to the answers
-        self.quiz_list_constant.update({quiz_name: {question: answer_list}})
+        self.question_data = {question: answer_list}  # binds the question to the answers
+        # self.quiz_list_constant.setdefault(self.quiz_name, {}).update(self.question_data)
         print('question added', self.quiz_list_constant)
 
     def finished_new_quiz(self):
-        self.name_frame.destroy()
+        self.name_frame.destroy()  # just clears the creation box
         self.question_input_frame.destroy()
         self.correct_frame.destroy()
         self.fake_answer_frame.destroy()
         self.add_question_button.destroy()
         self.finish_button.destroy()
-        self.quiz_menu()
+        sent_quiz = {}  # prepares dictionary to send
+        sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
+        compiled_quiz = "$" + str(sent_quiz)
+        self.send_request(compiled_quiz)  # uses send request (used as just send)
+        self.quiz_menu()  # loops back to the main menu
 
 
 def receiver(self):  # allows for looping with tkinter, currently unused
