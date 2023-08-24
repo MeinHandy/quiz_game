@@ -106,6 +106,7 @@ def process_response(response):  # not mine part of lib
 
 class Game:  # everything in this class was written by andre
     def __init__(self):
+        self.sent_quiz = {}
         self.quiz_name_input = None
         self.question_data = None
         self.new_quiz = {}
@@ -300,15 +301,12 @@ class Game:  # everything in this class was written by andre
         self.finish_button.grid()
 
     def add_question_func(self):
-        print('new')
-        print('adding question')
         self.quiz_name = self.quiz_name_input.get()
         answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
                        self.wrong_answer_b.get(), self.wrong_answer_c.get()]
         question = self.question_input.get()
         self.question_data = {question: answer_list}  # binds the question to the answers
-        # self.quiz_list_constant.setdefault(self.quiz_name, {}).update(self.question_data)
-        print('question added', self.quiz_list_constant)
+        self.sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
 
     def finished_new_quiz(self):
         self.name_frame.destroy()  # just clears the creation box
@@ -317,9 +315,7 @@ class Game:  # everything in this class was written by andre
         self.fake_answer_frame.destroy()
         self.add_question_button.destroy()
         self.finish_button.destroy()
-        sent_quiz = {}  # prepares dictionary to send
-        sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
-        compiled_quiz = "$" + str(sent_quiz)
+        compiled_quiz = "$" + str(self.sent_quiz)
         self.send_request(compiled_quiz)  # uses send request (used as just send)
         self.quiz_menu()  # loops back to the main menu
 
