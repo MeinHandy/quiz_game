@@ -1,4 +1,3 @@
-# Super, Fucking, Simple.
 from Crypto.Cipher import AES
 from Crypto import Random
 import threading
@@ -11,8 +10,7 @@ import os
 import json
 import ast
 
-# Stuff you do not read
-# https://stackoverflow.com/questions/12524994/encrypt-and-decrypt-using-pycrypto-aes-256#comment80992309_21928790
+
 class AESCipher(object):
     def __init__(self, key):
         self.bs = AES.block_size
@@ -63,7 +61,7 @@ class Server:
             print("Failure occurred: {}".format(e))
 
 
-# Stuff you read
+# My code
 class Game:
     def __init__(self):
         if os.path.exists("quizlist"):  # checks if a quizlist already exists
@@ -83,23 +81,7 @@ class Game:
             with open('quizlist', "x") as quizlist:
                 json.dump(self.quiz_list, quizlist)
 
-        '''
-        contains the quiz name, each question, and each answer including the incorrect answers, where the correct
-        answer will always be the first item in the "answer list"
-        '''
-
     def process_request(self, msg, username):
-        '''
-        msg = msg.lower()
-        command_chain = []
-        command = ""
-        for letter in msg + ',':
-            if letter == ',':
-                command_chain.append(command)
-                command = ""
-            else:
-                command += letter
-        '''
 
         response = ""
         # for item in range(len(command_chain)):  # Start processing command_chain here
@@ -109,10 +91,7 @@ class Game:
             msg = msg[1:]  # remove the dollar sign
             msg = ast.literal_eval(msg)  # converts the string (o.o)
             quiz_name = list(msg.keys())[0]
-            print(quiz_name, 'name')
-            print(msg[quiz_name], 'quiz data?')
             self.quiz_list[quiz_name] = msg[quiz_name]
-            print(self.quiz_list)
             response = "Quiz submitted"
         return response  # What client sees
 
@@ -149,7 +128,6 @@ class ServerThread(threading.Thread):
 
                 print('received "%s"' % self.msg)
                 print("Processing request")
-                # Do shit here
                 self.response = game.process_request(self.msg, self.password)
 
                 # Response
