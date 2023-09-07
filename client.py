@@ -106,6 +106,7 @@ def process_response(response):  # not mine part of lib
 
 class Game:  # everything in this class was written by andre
     def __init__(self):
+        self.answer_list = None
         self.sent_quiz = {}
         self.quiz_name_input = None
         self.question_data = None
@@ -279,12 +280,12 @@ class Game:  # everything in this class was written by andre
         self.question_input_frame.grid()
         self.question_input = ttk.Entry(self.question_input_frame)
         self.question_input.grid()
-        
+
         self.correct_frame = ttk.LabelFrame(self.root, text="Correct answer")  # correct answer input
         self.correct_frame.grid()
         self.correct_answer = ttk.Entry(self.correct_frame)
         self.correct_answer.grid()
-        
+
         self.fake_answer_frame = ttk.LabelFrame(self.root, text="Incorrect answers")
         self.fake_answer_frame.grid()
         self.wrong_answer_a = ttk.Entry(self.fake_answer_frame)  # inits the entry boxes
@@ -302,24 +303,44 @@ class Game:  # everything in this class was written by andre
 
     def add_question_func(self):
         self.quiz_name = self.quiz_name_input.get()
-        if self.quiz_name not in self.quiz_list_constant.keys():  # checks if
-            answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
-                           self.wrong_answer_b.get(), self.wrong_answer_c.get()]
-            question = self.question_input.get()
-            self.question_data = {question: answer_list}  # binds the question to the answers
+        if self.quiz_name in self.quiz_list_constant.keys():  # checks if
+            print("name occupied")
+        elif self.quiz_name.strip() == "":  # enforces valid input.
+            print("Input name")
+        elif self.question_input.get().strip() == "":
+            print("input question")
+        elif self.correct_answer.get().strip() == "":
+            print("input answer")
+        elif self.wrong_answer_a.get().strip() == "":
+            print("input wrong answer a")
+        elif self.wrong_answer_b.get().strip() == "":
+            print("input wrong answer b")
+        elif self.wrong_answer_c.get().strip() == "":
+            print("input wrong answer c")
+        else:
+            self.answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
+                                self.wrong_answer_b.get(), self.wrong_answer_c.get()]
+            self.question = self.question_input.get()
+            self.question_data = {self.question: self.answer_list}  # binds the question to the answers
             self.sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
 
     def finished_new_quiz(self):
-        self.name_frame.destroy()  # just clears the creation box
-        self.question_input_frame.destroy()
-        self.correct_frame.destroy()
-        self.fake_answer_frame.destroy()
-        self.add_question_button.destroy()
-        self.finish_button.destroy()
-        compiled_quiz = "$" + str(self.sent_quiz)
-        self.send_request(compiled_quiz)  # uses send request (used as just send)
-        self.quiz_menu()  # loops back to the main menu
-
+        if self.sent_quiz is None:  # checks if the quiz contains data
+            print("list empty")
+        else:
+            self.name_frame.destroy()  # just clears the creation box
+            self.question_input_frame.destroy()
+            self.correct_frame.destroy()
+            self.fake_answer_frame.destroy()
+            self.add_question_button.destroy()
+            self.finish_button.destroy()
+            compiled_quiz = "$" + str(self.sent_quiz)  # formats the quiz for sending
+            self.send_request(compiled_quiz)  # uses send request (used as just send)
+            self.answer_list = []
+            self.question = ""
+            self.question_data = {}
+            self.sent_quiz = None
+            self.quiz_menu()  # loops back to the main menu
 
     def receiver(self):  # allows for looping with tkinter, currently unused
         self.root.after(1000, self.receiver)
