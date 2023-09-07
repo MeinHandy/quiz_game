@@ -302,11 +302,12 @@ class Game:  # everything in this class was written by andre
 
     def add_question_func(self):
         self.quiz_name = self.quiz_name_input.get()
-        answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
-                       self.wrong_answer_b.get(), self.wrong_answer_c.get()]
-        question = self.question_input.get()
-        self.question_data = {question: answer_list}  # binds the question to the answers
-        self.sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
+        if self.quiz_name not in self.quiz_list_constant.keys():  # checks if
+            answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
+                           self.wrong_answer_b.get(), self.wrong_answer_c.get()]
+            question = self.question_input.get()
+            self.question_data = {question: answer_list}  # binds the question to the answers
+            self.sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
 
     def finished_new_quiz(self):
         self.name_frame.destroy()  # just clears the creation box
@@ -320,8 +321,8 @@ class Game:  # everything in this class was written by andre
         self.quiz_menu()  # loops back to the main menu
 
 
-def receiver(self):  # allows for looping with tkinter, currently unused
-    self.root.after(1000, self.receiver)
+    def receiver(self):  # allows for looping with tkinter, currently unused
+        self.root.after(1000, self.receiver)
 
 
 if __name__ == '__main__':
