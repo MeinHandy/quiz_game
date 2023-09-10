@@ -158,5 +158,5 @@ if __name__ == '__main__':
         newthread.start()
         threads.append(newthread)
 
-    for t in threads:
+    for t in threads:  # this does have to be here dont trust the IDE
         t.join()

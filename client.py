@@ -106,6 +106,12 @@ def process_response(response):  # not mine part of lib
 
 class Game:  # everything in this class was written by andre
     def __init__(self):
+        self.answer_label = None
+        self.next_button = None
+        self.answer_button_d = None
+        self.answer_button_c = None
+        self.answer_button_b = None
+        self.answer_button_a = None
         self.answer_list = None
         self.sent_quiz = {}
         self.quiz_name_input = None
@@ -231,41 +237,58 @@ class Game:  # everything in this class was written by andre
         self.quiz_frame.grid()
         quiz_question = Label(self.quiz_frame, text=self.question)
         quiz_question.grid(row=0, column=0, columnspan=3)
-        answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,  # sets up all the answer buttons
+        self.answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,  # sets up all the answer buttons
                                      command=lambda response=answer_a: self.check_answer(response))
-        answer_button_a.grid(row=1, column=1)
-        answer_button_b = ttk.Button(self.quiz_frame, text=answer_b,
+        self.answer_button_a.grid(row=1, column=1)
+        self.answer_button_b = ttk.Button(self.quiz_frame, text=answer_b,
                                      command=lambda response=answer_b: self.check_answer(response))
-        answer_button_b.grid(row=1, column=2)
-        answer_button_c = ttk.Button(self.quiz_frame, text=answer_c,
+        self.answer_button_b.grid(row=1, column=2)
+        self.answer_button_c = ttk.Button(self.quiz_frame, text=answer_c,
                                      command=lambda response=answer_c: self.check_answer(response))
-        answer_button_c.grid(row=2, column=1)
-        answer_button_d = ttk.Button(self.quiz_frame, text=answer_d,
+        self.answer_button_c.grid(row=2, column=1)
+        self.answer_button_d = ttk.Button(self.quiz_frame, text=answer_d,
                                      command=lambda response=answer_d: self.check_answer(response))
-        answer_button_d.grid(row=2, column=2)
+        self.answer_button_d.grid(row=2, column=2)
+        self.answer_label = Label(self.quiz_frame, text="")
+        self.answer_label.grid(row=3, column=0, columnspan=3)
+        self.next_button = ttk.Button(self.quiz_frame, text="Next question",
+                                      command=self.reset_question, state="disabled")
+        self.next_button.grid(row=4, column=0, columnspan=3)
 
     def check_answer(self, response):
         self.feedback = StringVar()
         if response == self.answer:  # checks if user was correct
             self.quiz_questions.remove(self.question)
-            self.quiz_frame.destroy()  # resets screen
             self.correct += 1
 
-            if len(self.quiz_questions) > 0:  # if there are more questions continue
-                self.next_question()  # loops back to next question
-            else:
-                self.post_quiz()
         else:
             self.quiz_questions.remove(self.question)
-            self.quiz_frame.destroy()  # resets screen
             self.incorrect += 1
-            if len(self.quiz_questions) > 0:  # if there are more questions continue
-                self.next_question()  # loops back to next question
-            else:
-                self.post_quiz()
+
+        if len(self.quiz_questions) > 0:  # if there are more questions continue
+            self.next_button["state"] = "enabled"
+            self.answer_label["text"] = "Correct answer: {}".format(self.answer)
+            self.answer_button_a["state"] = "disabled"
+            self.answer_button_b["state"] = "disabled"
+            self.answer_button_c["state"] = "disabled"
+            self.answer_button_d["state"] = "disabled"
+
+        else:
+            self.end_quiz()
+
+    def reset_question(self):
+        self.quiz_frame.destroy()
+        self.next_question()
+
+    def end_quiz(self):
+        self.answer_label["text"] = "Correct answer: {}".format(self.answer)
+        self.next_button["state"] = "enabled"
+        self.next_button["text"] = "End Quiz"
+        self.next_button["command"] = self.post_quiz
 
     def post_quiz(self):
-        print('score: {}/{}'.format(self.correct,  self.correct+self.incorrect))  # prints the total score of quiz
+        self.quiz_frame.destroy()
+        print('score: {}/{}'.format(self.correct,  self.correct+self.incorrect))  # prints score of quiz (debug)
         self.quiz_menu()
 
     def quiz_creator(self):
