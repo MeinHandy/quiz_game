@@ -93,6 +93,8 @@ class Game:
             quiz_name = list(msg.keys())[0]
             self.quiz_list[quiz_name] = msg[quiz_name]
             response = "Quiz submitted"
+            with open('quizlist', "w") as quizlist:
+                json.dump(self.quiz_list, quizlist)
         return response  # What client sees
 
 
