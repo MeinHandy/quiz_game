@@ -273,26 +273,26 @@ class Game:  # everything in this class was written by andre
 
         self.name_frame = ttk.LabelFrame(self.root, text="Quiz Name")  # quiz name input field
         self.name_frame.grid()
-        self.quiz_name_input = ttk.Entry(self.name_frame)
+        self.quiz_name_input = Entry(self.name_frame)
         self.quiz_name_input.grid()
 
         self.question_input_frame = ttk.LabelFrame(self.root, text="Question")  # question input field
         self.question_input_frame.grid()
-        self.question_input = ttk.Entry(self.question_input_frame)
+        self.question_input = Entry(self.question_input_frame)
         self.question_input.grid()
 
         self.correct_frame = ttk.LabelFrame(self.root, text="Correct answer")  # correct answer input
         self.correct_frame.grid()
-        self.correct_answer = ttk.Entry(self.correct_frame)
+        self.correct_answer = Entry(self.correct_frame)
         self.correct_answer.grid()
 
         self.fake_answer_frame = ttk.LabelFrame(self.root, text="Incorrect answers")
         self.fake_answer_frame.grid()
-        self.wrong_answer_a = ttk.Entry(self.fake_answer_frame)  # inits the entry boxes
+        self.wrong_answer_a = Entry(self.fake_answer_frame)  # inits the entry boxes
         self.wrong_answer_a.grid()
-        self.wrong_answer_b = ttk.Entry(self.fake_answer_frame)
+        self.wrong_answer_b = Entry(self.fake_answer_frame)
         self.wrong_answer_b.grid()
-        self.wrong_answer_c = ttk.Entry(self.fake_answer_frame)
+        self.wrong_answer_c = Entry(self.fake_answer_frame)
         self.wrong_answer_c.grid()
 
         self.add_question_button = ttk.Button(self.root, text="Add question", command=self.add_question_func)  # add q
@@ -303,21 +303,37 @@ class Game:  # everything in this class was written by andre
 
     def add_question_func(self):
         self.quiz_name = self.quiz_name_input.get()
+
         if self.quiz_name in self.quiz_list_constant.keys():  # checks if
             print("name occupied")
+            self.quiz_name_input.configure(bg="red")
+
         elif self.quiz_name.strip() == "":  # enforces valid input.
             print("Input name")
+            self.quiz_name_input.configure(bg="red")
+
         elif self.question_input.get().strip() == "":
             print("input question")
+            self.question_input.configure(bg="red")
+
         elif self.correct_answer.get().strip() == "":
             print("input answer")
+            self.correct_answer.configure(bg="red")
+
         elif self.wrong_answer_a.get().strip() == "":
             print("input wrong answer a")
+            self.wrong_answer_a.configure(bg="red")
+
         elif self.wrong_answer_b.get().strip() == "":
             print("input wrong answer b")
+            self.wrong_answer_b.configure(bg="red")
+
         elif self.wrong_answer_c.get().strip() == "":
             print("input wrong answer c")
+            self.wrong_answer_c.configure(bg="red")
+
         else:
+            self.quiz_name_input.config(state="disabled")
             self.answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
                                 self.wrong_answer_b.get(), self.wrong_answer_c.get()]
             self.question = self.question_input.get()
