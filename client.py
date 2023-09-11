@@ -55,7 +55,6 @@ class Client:  # not mine
         self.host = host
         self.password = hashlib.sha3_224(password.encode()).digest()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # print('connecting to %s port %s' % (host[0], host[1]))
         self.socket.connect((host[0], host[1]))
 
     # Set up encryption
@@ -85,10 +84,8 @@ class Client:  # not mine
 
 def raw_request(message):  # to bypass process_response
     request = str(message)  # May contain 8192 bytes
-    # print('sending "%s"' % request)  # debug message
     client.encrypt_and_send_msg(request)  # Message
     response = client.receive_and_decrypt_msg_response()  # Response
-    # print('received "%s"' % response)  # debug message
     return response
 
 
@@ -106,6 +103,9 @@ def process_response(response):  # not mine part of lib
 
 class Game:  # everything in this class was written by andre
     def __init__(self):
+        self.valid_question = None
+        self.exit_button = None
+        self.valid_quiz = False
         self.answer_label = None
         self.next_button = None
         self.answer_button_d = None
@@ -158,10 +158,8 @@ class Game:  # everything in this class was written by andre
 
     def send_request(self, message):
         request = str(message)  # May contain 8192 bytes
-        # print('sending "%s"' % request)
         client.encrypt_and_send_msg(request)  # Message
         response = client.receive_and_decrypt_msg_response()  # Response
-        # print('received "%s"' % response)
         command_chain = process_response(response)
         return command_chain
 
@@ -181,7 +179,7 @@ class Game:  # everything in this class was written by andre
         self.server_ip = self.server_list.get()
         self.server_port = self.server_ips.get(self.server_list.get())
         client.encryption_setup()
-        client.connect_server(host=(self.server_ip, self.server_port), password="user")  # password is more like a username
+        client.connect_server(host=(self.server_ip, self.server_port), password="user")  # password is a username
         client.encryptor = AESCipher(str(client.password))
         self.quiz_list_constant = raw_request("quiz_list")  # not running on the function
         self.quiz_list_constant = self.quiz_list_constant[:-1]  # removes annoying comma
@@ -238,16 +236,16 @@ class Game:  # everything in this class was written by andre
         quiz_question = Label(self.quiz_frame, text=self.question)
         quiz_question.grid(row=0, column=0, columnspan=3)
         self.answer_button_a = ttk.Button(self.quiz_frame, text=answer_a,  # sets up all the answer buttons
-                                     command=lambda response=answer_a: self.check_answer(response))
+                                          command=lambda response=answer_a: self.check_answer(response))
         self.answer_button_a.grid(row=1, column=1)
         self.answer_button_b = ttk.Button(self.quiz_frame, text=answer_b,
-                                     command=lambda response=answer_b: self.check_answer(response))
+                                          command=lambda response=answer_b: self.check_answer(response))
         self.answer_button_b.grid(row=1, column=2)
         self.answer_button_c = ttk.Button(self.quiz_frame, text=answer_c,
-                                     command=lambda response=answer_c: self.check_answer(response))
+                                          command=lambda response=answer_c: self.check_answer(response))
         self.answer_button_c.grid(row=2, column=1)
         self.answer_button_d = ttk.Button(self.quiz_frame, text=answer_d,
-                                     command=lambda response=answer_d: self.check_answer(response))
+                                          command=lambda response=answer_d: self.check_answer(response))
         self.answer_button_d.grid(row=2, column=2)
         self.answer_label = Label(self.quiz_frame, text="")
         self.answer_label.grid(row=3, column=0, columnspan=3)
@@ -268,12 +266,16 @@ class Game:  # everything in this class was written by andre
         if len(self.quiz_questions) > 0:  # if there are more questions continue
             self.next_button["state"] = "enabled"
             self.answer_label["text"] = "Correct answer: {}".format(self.answer)
-            self.answer_button_a["state"] = "disabled"
+            self.answer_button_a["state"] = "disabled"  # disables the answer buttons.
             self.answer_button_b["state"] = "disabled"
             self.answer_button_c["state"] = "disabled"
             self.answer_button_d["state"] = "disabled"
 
         else:
+            self.answer_button_a["state"] = "disabled"
+            self.answer_button_b["state"] = "disabled"
+            self.answer_button_c["state"] = "disabled"
+            self.answer_button_d["state"] = "disabled"
             self.end_quiz()
 
     def reset_question(self):
@@ -288,7 +290,6 @@ class Game:  # everything in this class was written by andre
 
     def post_quiz(self):
         self.quiz_frame.destroy()
-        print('score: {}/{}'.format(self.correct,  self.correct+self.incorrect))  # prints score of quiz (debug)
         self.quiz_menu()
 
     def quiz_creator(self):
@@ -323,66 +324,109 @@ class Game:  # everything in this class was written by andre
 
         self.finish_button = ttk.Button(self.root, text="Finished", command=self.finished_new_quiz)  # finished button
         self.finish_button.grid()
+        self.exit_button = ttk.Button(self.root, text="Exit without saving", command=self.exit_without_saving)
+        self.exit_button.grid()
 
     def add_question_func(self):
         self.quiz_name = self.quiz_name_input.get()
 
-        if self.quiz_name in self.quiz_list_constant.keys():  # checks if
-            print("name occupied")
+        if self.quiz_name in self.quiz_list_constant.keys():  # checks if quiz already exists
             self.quiz_name_input.configure(bg="red")
+            self.valid_question = False
+        elif self.quiz_name_input.get().strip() != "":
+            self.quiz_name_input.configure(bg="light gray")
+            if self.valid_question:
+                self.valid_question = True
 
-        elif self.quiz_name.strip() == "":  # enforces valid input.
-            print("Input name")
+        if self.quiz_name.strip() == "":  # enforces valid input.
             self.quiz_name_input.configure(bg="red")
+            self.valid_question = False
+        elif self.quiz_name.strip() != "":  # else could be used here, but under pretext of expansion,
+            self.quiz_name_input.configure(bg="light gray")  # elifs are used
+            if self.valid_question:
+                self.valid_question = True
 
-        elif self.question_input.get().strip() == "":
-            print("input question")
+        if self.question_input.get().strip() == "":
             self.question_input.configure(bg="red")
+            self.valid_question = False
+        elif self.question_input.get().strip() != "":
+            self.question_input.configure(bg="light gray")
+            if self.valid_question:
+                self.valid_question = True
 
-        elif self.correct_answer.get().strip() == "":
-            print("input answer")
+        if self.correct_answer.get().strip() == "":
             self.correct_answer.configure(bg="red")
+            self.valid_question = False
+        elif self.correct_answer.get().strip() != "":
+            self.correct_answer.configure(bg="light gray")
+            if self.valid_question:
+                self.valid_question = True
 
-        elif self.wrong_answer_a.get().strip() == "":
-            print("input wrong answer a")
+        if self.wrong_answer_a.get().strip() == "":
             self.wrong_answer_a.configure(bg="red")
+            self.valid_question = False
+        elif self.wrong_answer_a.get().strip() != "":
+            self.wrong_answer_a.configure(bg="light gray")
+            if self.valid_question:
+                self.valid_question = True
 
-        elif self.wrong_answer_b.get().strip() == "":
-            print("input wrong answer b")
+        if self.wrong_answer_b.get().strip() == "":
             self.wrong_answer_b.configure(bg="red")
+            self.valid_question = False
+        elif self.wrong_answer_b.get().strip() != "":
+            self.wrong_answer_b.configure(bg="light gray")
+            if self.valid_question:
+                self.valid_question = True
 
-        elif self.wrong_answer_c.get().strip() == "":
-            print("input wrong answer c")
+        if self.wrong_answer_c.get().strip() == "":
             self.wrong_answer_c.configure(bg="red")
+            self.valid_question = False
+        elif self.wrong_answer_c.get().strip() != "":
+            self.wrong_answer_c.configure(bg="light gray")
+            if self.valid_question:
+                self.valid_question = True
 
-        else:
+        if self.valid_question:
             self.quiz_name_input.config(state="disabled")
             self.answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
                                 self.wrong_answer_b.get(), self.wrong_answer_c.get()]
             self.question = self.question_input.get()
             self.question_data = {self.question: self.answer_list}  # binds the question to the answers
             self.sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
+            self.valid_quiz = True
 
     def finished_new_quiz(self):
-        if self.sent_quiz is None:  # checks if the quiz contains data
-            print("list empty")
-        else:
+        if self.valid_quiz:  # checks if the quiz contains data
             self.name_frame.destroy()  # just clears the creation box
             self.question_input_frame.destroy()
             self.correct_frame.destroy()
             self.fake_answer_frame.destroy()
             self.add_question_button.destroy()
             self.finish_button.destroy()
+            self.exit_button.destroy()
             compiled_quiz = "$" + str(self.sent_quiz)  # formats the quiz for sending
             self.send_request(compiled_quiz)  # uses send request (used as just send)
             self.answer_list = []
             self.question = ""
             self.question_data = {}
             self.sent_quiz = None
+            self.valid_quiz = False
             self.quiz_menu()  # loops back to the main menu
-
-    def receiver(self):  # allows for looping with tkinter, currently unused
-        self.root.after(1000, self.receiver)
+    
+    def exit_without_saving(self):
+        self.name_frame.destroy()  # just clears the creation box
+        self.question_input_frame.destroy()
+        self.correct_frame.destroy()
+        self.fake_answer_frame.destroy()
+        self.add_question_button.destroy()
+        self.finish_button.destroy()
+        self.answer_list = []
+        self.question = ""
+        self.question_data = {}
+        self.sent_quiz = None
+        self.valid_quiz = False
+        self.exit_button.destroy()
+        self.quiz_menu()  # loops back to the main menu   
 
 
 if __name__ == '__main__':
