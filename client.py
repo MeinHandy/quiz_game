@@ -103,7 +103,7 @@ def process_response(response):  # not mine part of lib
 
 class Game:  # everything in this class was written by andre
     def __init__(self):
-        self.valid_question = None
+        self.valid_question = True
         self.exit_button = None
         self.valid_quiz = False
         self.answer_label = None
@@ -322,78 +322,67 @@ class Game:  # everything in this class was written by andre
         self.add_question_button = ttk.Button(self.root, text="Add question", command=self.add_question_func)  # add q
         self.add_question_button.grid()
 
-        self.finish_button = ttk.Button(self.root, text="Finished", command=self.finished_new_quiz)  # finished button
+        self.finish_button = ttk.Button(self.root, text="Finished", state="disabled",
+                                        command=self.finished_new_quiz)  # finished button
         self.finish_button.grid()
         self.exit_button = ttk.Button(self.root, text="Exit without saving", command=self.exit_without_saving)
         self.exit_button.grid()
 
     def add_question_func(self):
         self.quiz_name = self.quiz_name_input.get()
-
         if self.quiz_name in self.quiz_list_constant.keys():  # checks if quiz already exists
             self.quiz_name_input.configure(bg="red")
             self.valid_question = False
         elif self.quiz_name_input.get().strip() != "":
-            self.quiz_name_input.configure(bg="light gray")
-            if self.valid_question:
-                self.valid_question = True
+            self.quiz_name_input.configure(bg="white")
 
         if self.quiz_name.strip() == "":  # enforces valid input.
             self.quiz_name_input.configure(bg="red")
             self.valid_question = False
         elif self.quiz_name.strip() != "":  # else could be used here, but under pretext of expansion,
-            self.quiz_name_input.configure(bg="light gray")  # elifs are used
-            if self.valid_question:
-                self.valid_question = True
+            self.quiz_name_input.configure(bg="white")  # elifs are used
 
-        if self.question_input.get().strip() == "":
+        if self.question_input.get().strip() == "":  # checks if empty
             self.question_input.configure(bg="red")
-            self.valid_question = False
+            self.valid_question = False  # question is invalid
         elif self.question_input.get().strip() != "":
-            self.question_input.configure(bg="light gray")
-            if self.valid_question:
-                self.valid_question = True
+            self.question_input.configure(bg="white")
 
         if self.correct_answer.get().strip() == "":
             self.correct_answer.configure(bg="red")
             self.valid_question = False
         elif self.correct_answer.get().strip() != "":
-            self.correct_answer.configure(bg="light gray")
-            if self.valid_question:
-                self.valid_question = True
+            self.correct_answer.configure(bg="white")
 
         if self.wrong_answer_a.get().strip() == "":
             self.wrong_answer_a.configure(bg="red")
             self.valid_question = False
         elif self.wrong_answer_a.get().strip() != "":
-            self.wrong_answer_a.configure(bg="light gray")
-            if self.valid_question:
-                self.valid_question = True
+            self.wrong_answer_a.configure(bg="white")
 
         if self.wrong_answer_b.get().strip() == "":
             self.wrong_answer_b.configure(bg="red")
             self.valid_question = False
         elif self.wrong_answer_b.get().strip() != "":
-            self.wrong_answer_b.configure(bg="light gray")
-            if self.valid_question:
-                self.valid_question = True
+            self.wrong_answer_b.configure(bg="white")
 
         if self.wrong_answer_c.get().strip() == "":
             self.wrong_answer_c.configure(bg="red")
             self.valid_question = False
         elif self.wrong_answer_c.get().strip() != "":
-            self.wrong_answer_c.configure(bg="light gray")
-            if self.valid_question:
-                self.valid_question = True
+            self.wrong_answer_c.configure(bg="white")
 
         if self.valid_question:
             self.quiz_name_input.config(state="disabled")
+            self.finish_button.config(state="enabled")
             self.answer_list = [self.correct_answer.get(), self.wrong_answer_a.get(),  # sets the answer list up
                                 self.wrong_answer_b.get(), self.wrong_answer_c.get()]
             self.question = self.question_input.get()
             self.question_data = {self.question: self.answer_list}  # binds the question to the answers
             self.sent_quiz.setdefault(self.quiz_name, {}).update(self.question_data)
             self.valid_quiz = True
+        else:  # assumes question is valid, on button press will retest validity
+            self.valid_question = True
 
     def finished_new_quiz(self):
         if self.valid_quiz:  # checks if the quiz contains data
@@ -409,7 +398,7 @@ class Game:  # everything in this class was written by andre
             self.answer_list = []
             self.question = ""
             self.question_data = {}
-            self.sent_quiz = None
+            self.sent_quiz = {}
             self.valid_quiz = False
             self.quiz_menu()  # loops back to the main menu
     
@@ -423,7 +412,7 @@ class Game:  # everything in this class was written by andre
         self.answer_list = []
         self.question = ""
         self.question_data = {}
-        self.sent_quiz = None
+        self.sent_quiz = {}
         self.valid_quiz = False
         self.exit_button.destroy()
         self.quiz_menu()  # loops back to the main menu   
